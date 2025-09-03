@@ -1,0 +1,10 @@
+app:
+  name: "Book Store"
+  port: 8080
+  version: "1.0.0"
+  writeTimeout: 60
+  readTimeout: 60
+  idleTimeout: 120
+database:
+  uri: "postgres://pg:pass@localhost/postgres?sslmode=disable"
+  maxConns: 50

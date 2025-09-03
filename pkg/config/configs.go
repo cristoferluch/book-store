@@ -1,0 +1,18 @@
+package config
+
+import "time"
+
+type Config struct {
+	App struct {
+		Name         string
+		Port         int
+		Version      string
+		WriteTimeout time.Duration
+		ReadTimeout  time.Duration
+		IdleTimeout  time.Duration
+	}
+	Database struct {
+		URI      string
+		MaxConns int32
+	}
+}

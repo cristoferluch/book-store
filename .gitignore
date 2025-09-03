@@ -1,0 +1,11 @@
+/vendor/
+/go.sum
+
+.idea/
+.vscode/
+.DS_Store
+
+.env
+/tmp/
+*.local
+/logs/
