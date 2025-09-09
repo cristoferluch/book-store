@@ -23,7 +23,7 @@ import (
 func main() {
 
 	if err := start(); err != nil {
-		slog.Error("Error starting server", err)
+		slog.Error("Error starting server", slog.String("error", err.Error()))
 		panic(err)
 	}
 }
@@ -55,6 +55,9 @@ func start() error {
 		IdleTimeout:  time.Second * cfg.App.IdleTimeout,
 	}
 
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
 	go func() {
 		slog.Info("server started",
 			slog.String("addr", fmt.Sprintf(":%d", cfg.App.Port)),
@@ -67,12 +70,10 @@ func start() error {
 		}
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
 	<-quit
+	slog.Info("shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	if err := s.Shutdown(ctx); err != nil {

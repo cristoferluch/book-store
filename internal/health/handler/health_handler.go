@@ -3,16 +3,15 @@ package handler
 import (
 	"book-store/internal/health/entity"
 	"book-store/pkg/utils"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type HealthHandler struct {
-	db      *pgxpool.Pool
-	version string
+	db *pgxpool.Pool
 }
 
 func NewHealthHandler(db *pgxpool.Pool) *HealthHandler {

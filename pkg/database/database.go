@@ -3,30 +3,27 @@ package database
 import (
 	"book-store/pkg/config"
 	"context"
-	"log"
-
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/lib/pq"
+	"time"
 )
 
 func NewPostgresDB(cfg *config.Config) (*pgxpool.Pool, error) {
-
 	ctx := context.Background()
-
 	parseConfig, err := pgxpool.ParseConfig(cfg.Database.URI)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-
 	parseConfig.MaxConns = cfg.Database.MaxConns
+	parseConfig.MinConns = cfg.Database.MinConns
+	parseConfig.MaxConnLifetime = cfg.Database.MaxConnLifetime * time.Minute
+	parseConfig.MaxConnIdleTime = cfg.Database.MaxConnIdleTime * time.Minute
 
 	db, err := pgxpool.NewWithConfig(ctx, parseConfig)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	err = db.Ping(ctx)
-	if err != nil {
+	if err := db.Ping(ctx); err != nil {
 		return nil, err
 	}
 

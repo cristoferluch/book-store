@@ -3,7 +3,6 @@ package handler
 import (
 	"book-store/internal/book/entity"
 	"book-store/pkg/utils"
-	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -40,22 +39,17 @@ func (h *BookHandler) getBookById(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.ParseInt(p, 10, 64)
 	if err != nil {
-		utils.SendJSON(w, utils.APIResponse{Error: "invalid id"}, http.StatusBadRequest)
 		return
 	}
 
 	response, err := h.bookService.GetBookById(ctx, id)
 	if err != nil {
-		slog.Error("Erro in getBookById", slog.String("error", err.Error()))
-		if errors.Is(err, entity.ErrBookNotFound) {
-			utils.SendJSON(w, utils.APIResponse{Error: entity.ErrBookNotFound.Error()}, http.StatusNotFound)
-			return
-		}
-		utils.SendJSON(w, utils.APIResponse{Error: "something went wrong"}, http.StatusInternalServerError)
+		slog.ErrorContext(ctx, "Erro in getBookById", slog.String("error", err.Error()))
+		utils.SendError(w, err)
 		return
 	}
 
-	utils.SendJSON(w, utils.APIResponse{Data: response}, http.StatusOK)
+	utils.SendJSON(w, response, http.StatusOK)
 }
 
 func (h *BookHandler) getBooks(w http.ResponseWriter, r *http.Request) {

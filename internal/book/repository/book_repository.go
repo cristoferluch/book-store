@@ -2,11 +2,13 @@ package repository
 
 import (
 	"book-store/internal/book/entity"
+	"book-store/pkg/utils/http_errors"
 	"context"
 	"errors"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type BookRepository struct {
@@ -41,9 +43,10 @@ func (r *BookRepository) GetBookById(ctx context.Context, id int64) (*entity.Boo
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, entity.ErrBookNotFound
+			return nil, http_errors.NewNotFoundError(http_errors.ErrBookNotFound)
 		}
-		return nil, err
+		slog.Error(err.Error())
+		return nil, http_errors.NewUnexpectedError(http_errors.Unexpected)
 	}
 
 	return &book, nil

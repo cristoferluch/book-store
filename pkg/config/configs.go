@@ -12,7 +12,10 @@ type Config struct {
 		IdleTimeout  time.Duration
 	}
 	Database struct {
-		URI      string
-		MaxConns int32
+		URI             string
+		MaxConns        int32
+		MinConns        int32
+		MaxConnLifetime time.Duration
+		MaxConnIdleTime time.Duration
 	}
 }

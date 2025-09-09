@@ -6,10 +6,10 @@ import (
 	bookSvc "book-store/internal/book/service"
 	healthHdl "book-store/internal/health/handler"
 	"book-store/pkg/middlewares"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func NewServer(db *pgxpool.Pool) *chi.Mux {
