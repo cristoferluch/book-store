@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"log/slog"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 
@@ -17,14 +17,14 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(ww, r)
 
-		slog.Info("http request",
-			slog.String("method", r.Method),
-			slog.String("host", r.Host),
-			slog.String("url", r.URL.String()),
-			slog.Int("status", ww.Status()),
-			slog.String("latency", time.Since(start).String()),
-			slog.String("ip", r.RemoteAddr),
-			slog.String("user_agent", r.UserAgent()),
+		zap.L().Info("http request",
+			zap.String("method", r.Method),
+			zap.String("host", r.Host),
+			zap.String("url", r.URL.String()),
+			zap.Int("status", ww.Status()),
+			zap.String("latency", time.Since(start).String()),
+			zap.String("ip", r.RemoteAddr),
+			zap.String("user_agent", r.UserAgent()),
 		)
 	})
 }

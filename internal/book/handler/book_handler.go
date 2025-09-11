@@ -2,8 +2,10 @@ package handler
 
 import (
 	"book-store/internal/book/entity"
+	"book-store/internal/http_error"
 	"book-store/pkg/utils"
-	"log/slog"
+	"encoding/json"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 
@@ -39,12 +41,15 @@ func (h *BookHandler) getBookById(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.ParseInt(p, 10, 64)
 	if err != nil {
+		utils.SendError(w, http_error.NewBadRequestError(http_error.ErrInvalidId))
 		return
 	}
 
 	response, err := h.bookService.GetBookById(ctx, id)
 	if err != nil {
-		slog.ErrorContext(ctx, "Erro in getBookById", slog.String("error", err.Error()))
+		zap.L().Error("Erro in getBookById",
+			zap.String("error", err.Error()),
+		)
 		utils.SendError(w, err)
 		return
 	}
@@ -52,11 +57,29 @@ func (h *BookHandler) getBookById(w http.ResponseWriter, r *http.Request) {
 	utils.SendJSON(w, response, http.StatusOK)
 }
 
-func (h *BookHandler) getBooks(w http.ResponseWriter, r *http.Request) {
-	// TODO: implement
+func (h *BookHandler) saveBook(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	var book entity.Book
+	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
+		utils.SendError(w, http_error.NewBadRequestError(http_error.ErrInvalidRequestBody))
+		return
+	}
+
+	response, err := h.bookService.SaveBook(ctx, book)
+	if err != nil {
+		zap.L().Error("Erro in saveBook",
+			zap.String("error", err.Error()),
+		)
+		utils.SendError(w, err)
+		return
+	}
+
+	utils.SendJSON(w, response, http.StatusCreated)
 }
 
-func (h *BookHandler) saveBook(w http.ResponseWriter, r *http.Request) {
+func (h *BookHandler) getBooks(w http.ResponseWriter, r *http.Request) {
 	// TODO: implement
 }
 

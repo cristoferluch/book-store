@@ -1,10 +1,10 @@
 package utils
 
 import (
-	"book-store/pkg/utils/http_errors"
+	"book-store/internal/http_error"
 	"errors"
 	"github.com/bytedance/sonic"
-	"log/slog"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -22,9 +22,9 @@ func SendJSON(w http.ResponseWriter, payload interface{}, code int) {
 
 	response, err := sonic.Marshal(p)
 	if err != nil {
-		slog.Error("failed to marshal response",
-			slog.String("error", err.Error()),
-			slog.Any("payload", payload),
+		zap.L().Error("failed to marshal response",
+			zap.String("error", err.Error()),
+			zap.Any("payload", payload),
 		)
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -38,7 +38,7 @@ func SendJSON(w http.ResponseWriter, payload interface{}, code int) {
 
 func SendError(w http.ResponseWriter, err error) {
 
-	var handlerError http_errors.HandlerError
+	var handlerError http_error.HandlerError
 
 	var code int
 	var message string
@@ -58,9 +58,9 @@ func SendError(w http.ResponseWriter, err error) {
 
 	response, err := sonic.Marshal(p)
 	if err != nil {
-		slog.Error("failed to marshal response",
-			slog.String("error", err.Error()),
-			slog.Any("payload", p),
+		zap.L().Error("failed to marshal response",
+			zap.String("error", err.Error()),
+			zap.Any("payload", p),
 		)
 
 		w.WriteHeader(http.StatusInternalServerError)

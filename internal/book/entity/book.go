@@ -6,3 +6,12 @@ type Book struct {
 	ISBN   string `json:"isbn"`
 	ID     int    `json:"id"`
 }
+
+type BookQuery struct {
+	Author string `form:"author"`
+	ISBN   string `form:"isbn"`
+	Title  string `form:"title"`
+	Page   int    `form:"page"`
+	Limit  int    `form:"limit"`
+	Sort   string `form:"sort"`
+}

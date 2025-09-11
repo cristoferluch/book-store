@@ -10,6 +10,8 @@ type Config struct {
 		WriteTimeout time.Duration
 		ReadTimeout  time.Duration
 		IdleTimeout  time.Duration
+		Environment  string
+		LogPath      string
 	}
 	Database struct {
 		URI             string

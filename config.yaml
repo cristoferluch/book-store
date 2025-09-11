@@ -5,6 +5,8 @@ app:
   writeTimeout: 15
   readTimeout: 15
   idleTimeout: 60
+  environment: "dev"
+  logPath: "./logs"
 database:
   uri: "postgres://pg:pass@localhost/postgres?sslmode=disable"
   maxConns: 50

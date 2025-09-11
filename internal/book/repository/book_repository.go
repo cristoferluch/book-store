@@ -2,13 +2,12 @@ package repository
 
 import (
 	"book-store/internal/book/entity"
-	"book-store/pkg/utils/http_errors"
+	"book-store/internal/http_error"
 	"context"
 	"errors"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"log/slog"
-
+	"fmt"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type BookRepository struct {
@@ -43,10 +42,32 @@ func (r *BookRepository) GetBookById(ctx context.Context, id int64) (*entity.Boo
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, http_errors.NewNotFoundError(http_errors.ErrBookNotFound)
+			return nil, http_error.NewNotFoundError(http_error.ErrBookNotFound)
 		}
-		slog.Error(err.Error())
-		return nil, http_errors.NewUnexpectedError(http_errors.Unexpected)
+		return nil, errors.Join(http_error.NewUnexpectedError(http_error.ErrUnexpected), fmt.Errorf("failed to get book"), err)
+	}
+
+	return &book, nil
+}
+
+func (r *BookRepository) SaveBook(ctx context.Context, book entity.Book) (*entity.Book, error) {
+
+	query := `
+		INSERT INTO book (title, author, isbn) values ($1, $2, $3) returning id
+	`
+
+	err := r.db.QueryRow(
+		ctx,
+		query,
+		book.Title,
+		book.Author,
+		book.ISBN,
+	).Scan(
+		&book.ID,
+	)
+
+	if err != nil {
+		return nil, errors.Join(http_error.NewUnexpectedError(http_error.ErrUnexpected), fmt.Errorf("failed to save book"), err)
 	}
 
 	return &book, nil

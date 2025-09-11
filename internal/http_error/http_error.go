@@ -1,10 +1,17 @@
-package http_errors
+package http_error
 
 import "net/http"
 
 const (
-	ErrBookNotFound = "book not found"
-	Unexpected      = "something went wrong"
+	ErrBookNotFound       = "book not found"
+	ErrUnexpected         = "something went wrong"
+	ErrInvalidId          = "invalid id"
+	ErrInvalidRequestBody = "invalid request body"
+	ErrInvalidQueryParams = "invalid query params"
+
+	ErrBookAuthorIsRequired = "book author is required"
+	ErrBookIsbnIsRequired   = "book isbn is required"
+	ErrBookTitleIsRequired  = "book title is required"
 )
 
 type HandlerError struct {

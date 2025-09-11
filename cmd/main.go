@@ -6,12 +6,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
+	"github.com/natefinch/lumberjack"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"log"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 
 	"book-store/pkg/database"
 	"syscall"
@@ -23,8 +25,7 @@ import (
 func main() {
 
 	if err := start(); err != nil {
-		slog.Error("Error starting server", slog.String("error", err.Error()))
-		panic(err)
+		log.Fatalf("Error starting server: %v", err.Error())
 	}
 }
 
@@ -35,9 +36,14 @@ func start() error {
 		return err
 	}
 
-	if err := setupLogger(); err != nil {
+	lg, err := newZapLogger(cfg)
+	if err != nil {
 		return err
 	}
+	defer lg.Sync()
+
+	undo := zap.ReplaceGlobals(lg)
+	defer undo()
 
 	db, err := database.NewPostgresDB(cfg)
 	if err != nil {
@@ -59,9 +65,10 @@ func start() error {
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		slog.Info("server started",
-			slog.String("addr", fmt.Sprintf(":%d", cfg.App.Port)),
-			slog.String("version", cfg.App.Version),
+		zap.L().Info("server started",
+			zap.String("addr", fmt.Sprintf(":%d", cfg.App.Port)),
+			zap.String("version", cfg.App.Version),
+			zap.String("environment", cfg.App.Environment),
 		)
 		if err := s.ListenAndServe(); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
@@ -71,45 +78,64 @@ func start() error {
 	}()
 
 	<-quit
-	slog.Info("shutting down server...")
+	zap.L().Info("shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	if err := s.Shutdown(ctx); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("server error",
-				slog.String("error", err.Error()),
+			zap.L().Error("server error",
+				zap.String("error", err.Error()),
 			)
 		}
 	}
 
-	slog.Info("Server successfully shut down")
+	zap.L().Info("server successfully shut down")
 
 	return nil
 }
 
-func setupLogger() error {
+func newZapLogger(cfg *config.Config) (logger *zap.Logger, err error) {
 
-	err := os.Mkdir("./logs", 0755)
-	if err != nil && !os.IsExist(err) {
-		return err
+	if cfg.App.Environment == "production" {
+		if err := os.MkdirAll(cfg.App.LogPath, 0755); err != nil {
+			return nil, err
+		}
 	}
 
-	fileName := fmt.Sprintf("./logs/%s.log", time.Now().Format("2006-01-02"))
+	var encoderConfig zapcore.EncoderConfig
+	var level zapcore.Level
 
-	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		return err
+	if cfg.App.Environment == "production" {
+		encoderConfig = zap.NewProductionEncoderConfig()
+		level = zapcore.InfoLevel
+	} else {
+		encoderConfig = zap.NewDevelopmentEncoderConfig()
+		level = zapcore.DebugLevel
 	}
 
-	multiWriter := io.MultiWriter(os.Stdout, file)
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	encoder := zapcore.NewJSONEncoder(encoderConfig)
 
-	logger := slog.New(slog.NewJSONHandler(multiWriter, nil))
+	fileWriteSyncer := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   path.Join(cfg.App.LogPath, "app.log"),
+		MaxSize:    10,
+		MaxBackups: 7,
+		MaxAge:     30,
+		Compress:   false,
+	})
 
-	slog.SetDefault(logger)
+	var core zapcore.Core
 
-	return nil
+	if cfg.App.Environment == "production" {
+		core = zapcore.NewCore(encoder, fileWriteSyncer, level)
+	} else {
+		core = zapcore.NewCore(zapcore.NewConsoleEncoder(encoderConfig), zapcore.AddSync(os.Stdout), level)
+	}
+
+	return zap.New(core, zap.AddCaller()), nil
 }
 
 func newConfigLoader() (*config.Config, error) {
