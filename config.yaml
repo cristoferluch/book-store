@@ -9,7 +9,7 @@ app:
   logPath: "./logs"
 database:
   uri: "postgres://pg:pass@localhost/postgres?sslmode=disable"
-  maxConns: 50
+  maxConns: 100
   minConns: 10
   maxConnLifetime: 10
-  MaxConnIdleTime: 5
+  MaxConnIdleTime: 10

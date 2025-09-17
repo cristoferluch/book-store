@@ -20,4 +20,7 @@ type Config struct {
 		MaxConnLifetime time.Duration
 		MaxConnIdleTime time.Duration
 	}
+	StartTime time.Time
 }
+
+var Cfg = &Config{}

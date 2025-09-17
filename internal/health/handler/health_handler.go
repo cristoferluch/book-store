@@ -2,12 +2,12 @@ package handler
 
 import (
 	"book-store/internal/health/entity"
+	"book-store/pkg/config"
 	"book-store/pkg/utils"
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
 	"time"
-
-	"github.com/go-chi/chi/v5"
 )
 
 type HealthHandler struct {
@@ -30,23 +30,17 @@ func (h *HealthHandler) checkHealth(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	status := "healthy"
-	dbStatus := "connected"
+	dbStatus := "up"
 
 	if err := h.db.Ping(ctx); err != nil {
-		status = "unhealthy"
-		dbStatus = "disconnected"
+		dbStatus = "down"
 	}
 
-	response := entity.HealthStatus{
-		Status:    status,
-		Timestamp: time.Now().UTC(),
-		Database:  dbStatus,
+	response := entity.HealthResponse{
+		Version:  config.Cfg.App.Version,
+		Database: dbStatus,
+		Uptime:   time.Since(config.Cfg.StartTime).Truncate(time.Second).String(),
 	}
 
-	if status == "unhealthy" {
-		utils.SendJSON(w, response, http.StatusServiceUnavailable)
-	} else {
-		utils.SendJSON(w, response, http.StatusOK)
-	}
+	utils.SendJSON(w, response, http.StatusOK)
 }

@@ -7,18 +7,18 @@ import (
 	"time"
 )
 
-func NewPostgresDB(cfg *config.Config) (*pgxpool.Pool, error) {
+func NewPostgresDB() (*pgxpool.Pool, error) {
 	ctx := context.Background()
 
-	parseConfig, err := pgxpool.ParseConfig(cfg.Database.URI)
+	parseConfig, err := pgxpool.ParseConfig(config.Cfg.Database.URI)
 	if err != nil {
 		return nil, err
 	}
 
-	parseConfig.MaxConns = cfg.Database.MaxConns
-	parseConfig.MinConns = cfg.Database.MinConns
-	parseConfig.MaxConnLifetime = cfg.Database.MaxConnLifetime * time.Minute
-	parseConfig.MaxConnIdleTime = cfg.Database.MaxConnIdleTime * time.Minute
+	parseConfig.MaxConns = config.Cfg.Database.MaxConns
+	parseConfig.MinConns = config.Cfg.Database.MinConns
+	parseConfig.MaxConnLifetime = config.Cfg.Database.MaxConnLifetime * time.Minute
+	parseConfig.MaxConnIdleTime = config.Cfg.Database.MaxConnIdleTime * time.Minute
 
 	db, err := pgxpool.NewWithConfig(ctx, parseConfig)
 	if err != nil {
