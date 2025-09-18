@@ -1,8 +1,8 @@
 package handler
 
 import (
+	"book-store/configs"
 	"book-store/internal/health/entity"
-	"book-store/pkg/config"
 	"book-store/pkg/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -37,9 +37,9 @@ func (h *HealthHandler) checkHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := entity.HealthResponse{
-		Version:  config.Cfg.App.Version,
+		Version:  configs.Cfg.App.Version,
 		Database: dbStatus,
-		Uptime:   time.Since(config.Cfg.StartTime).Truncate(time.Second).String(),
+		Uptime:   time.Since(configs.Cfg.StartTime).Truncate(time.Second).String(),
 	}
 
 	utils.SendJSON(w, response, http.StatusOK)
